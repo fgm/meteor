@@ -1,0 +1,4 @@
+meteor.backlink:
+  title: 'Meteor demo'
+  description: 'Demonstrate transparent Meteor login'
+  route_name: meteor.backlink

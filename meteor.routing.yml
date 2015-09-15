@@ -1,0 +1,28 @@
+meteor.overview:
+  path: '/admin/reports/meteor'
+  defaults:
+    _controller: '\Drupal\meteor\Controller\ReportsController::overview'
+  requirements:
+    _permission: 'access site reports'
+
+meteor.whoami:
+  path: '/meteor/whoami'
+  defaults:
+    _controller: '\Drupal\meteor\Controller\ServiceController::whoami'
+  requirements:
+    _permission: 'access content'
+
+meteor.site_info:
+  path: '/meteor/siteInfo'
+  defaults:
+    _controller: '\Drupal\meteor\Controller\ServiceController::siteInfo'
+  requirements:
+    _permission: 'access content'
+
+meteor.backlink:
+  path: '/meteor/backlink'
+  defaults:
+    _controller: '\Drupal\meteor\Controller\ServiceController::backlink'
+  requirements:
+    _permission: 'access content'
+
