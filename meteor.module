@@ -1,12 +1,27 @@
 <?php
 
+use GuzzleHttp\Promise\PromiseInterface;
+
+function meteor_finalize_wait(PromiseInterface $promise) {
+  $promise->wait(TRUE);
+}
+
+function meteor_notify($delay) {
+  $path = $delay ? 'updateUserDeferred' : 'updateUser';
+
+  /** @var \GuzzleHttp\Client $client */
+  $client = \Drupal::service('http_client');
+  $promise = $client->getAsync('http://drop8:3000/' . $path);
+  drupal_register_shutdown_function(function () use ($promise) {
+    meteor_finalize_wait($promise);
+  });
+}
+
 /**
  * Implements hook_user_logout().
  */
 function meteor_user_logout($account) {
-  /** @var \GuzzleHttp\Client $client */
-  $client = \Drupal::service('http_client');
-  $client->get('http://drop8:3000/updateUser');
+  meteor_notify(0);
 }
 
 /**
@@ -14,6 +29,5 @@ function meteor_user_logout($account) {
  */
 function meteor_user_login($account) {
   /** @var \GuzzleHttp\Client $client */
-  $client = \Drupal::service('http_client');
-  $client->get('http://drop8:3000/updateUserDeferred');
+  meteor_notify(1000);
 }
