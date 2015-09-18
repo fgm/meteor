@@ -1,5 +1,5 @@
 services:
   meteor_initializer:
-    class: \Drupal\meteor\Initializer
+    class: Drupal\meteor\Initializer
     tags:
       - { name: 'event_subscriber' }
