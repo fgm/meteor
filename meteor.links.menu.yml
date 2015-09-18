@@ -8,3 +8,7 @@ meteor.config_form:
   description: 'Configure the Meteor module'
   route_name: meteor.config_form
   parent: system.admin_config_services
+
+meteor_server.menu:
+  title: Meteor servers
+  route_name: entity.meteor_server.list

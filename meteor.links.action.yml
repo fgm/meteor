@@ -1,0 +1,15 @@
+# Add some local task links to facilitate navigation.
+
+meteor.add_action:
+  route_name: entity.meteor_server.add_form
+  title: 'Register Meteor server'
+  appears_on:
+    - entity.meteor_server.list
+
+meteor.list_action:
+  route_name: entity.meteor_server.list
+  title: 'List Meteor server registrations'
+  appears_on:
+    - entity.meteor_server.add_form
+    - entity.meteor_server.edit
+    - entity.meteor_server.delete

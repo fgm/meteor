@@ -1,0 +1,5 @@
+# The id of the config entity.
+id: marvin
+# Our properties follow.
+label: 'Marvin, the paranoid Meteor server'
+appKey: '1111'

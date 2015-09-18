@@ -26,7 +26,6 @@ meteor.backlink:
   requirements:
     _permission: 'access content'
 
-
 meteor.config_form:
   path: '/admin/config/meteor/config'
   defaults:
@@ -34,3 +33,57 @@ meteor.config_form:
     _title: 'ConfigForm'
   requirements:
     _permission: 'access administration pages'
+
+# List all server registrations.
+entity.meteor_server.list:
+  path: '/meteor'
+  defaults:
+    # '_entity_list' tells Drupal to use an entity list controller.
+    # We give the entity ID here. Drupal then looks in the entity's annotation
+    # and looks for the "list" entry under "controllers" for the class to load.
+    # @see \Drupal\Core\Entity\Enhancer\EntityRouteEnhancer
+    _entity_list: 'meteor_server'
+    _title: 'Meteor'
+  requirements:
+    _permission: 'administer meteor servers'
+
+# Add a server registration.
+entity.meteor_server.add_form:
+  path: '/meteor/add'
+  defaults:
+    _title: 'Register Meteor server'
+    # Like _entity_list above, _entity_form gives the entity type ID, only this
+    # time also lists the form separated by a period. Drupal looks in the
+    # annotation for the entity and locates the "add" entry under "form" for
+    # the form class to load.
+    # @see \Drupal\Core\Entity\Enhancer\EntityRouteEnhancer
+    _entity_form: meteor_server.add
+  requirements:
+    _entity_create_access: meteor_server
+
+# Edit a server registration.
+entity.meteor_server.edit_form:
+  # Parameters may be passed to the form via the URL path. We name the
+  # parameter in the path by enclosing it in curly braces. For entity forms,
+  # we include the entity ID in the path by including a parameter with the
+  # same name as the entity type ID.
+  path: '/meteor/manage/{meteor_server}'
+  defaults:
+    _title: 'Edit Meteor server registration'
+    # List our add entry above, this _entity_form entry instructs Drupal to
+    # read our entity type's annonation, and look for the "edit" entry under
+    # "form".
+    _entity_form: meteor_server.edit
+  requirements:
+    # This uses our entity access controller.
+    # @see \Drupal\Core\Entity\EntityAccessCheck
+    _entity_access: meteor_server.update
+
+# Delete a server registration.
+entity.meteor_server.delete_form:
+  path: '/meteor/manage/{meteor_server}/delete'
+  defaults:
+    _title: 'Unregister Meteor server'
+    _entity_form: meteor_server.delete
+  requirements:
+    _entity_access: meteor_server.delete

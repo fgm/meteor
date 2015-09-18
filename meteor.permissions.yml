@@ -1,0 +1,4 @@
+#Define the administer permission for the Meteor server config entity.
+'administer meteor servers':
+  title: 'Administer Meteor server'
+  description: Create and edit Meteor servers.

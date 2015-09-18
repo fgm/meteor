@@ -5,6 +5,21 @@
  * The Meteor SSO support module.
  */
 
+/**
+ * @defgroup meteor Meteor module
+ * @ingroup meteor
+ * @{
+ * The Meteor module provides:
+ * - a MeteorServer config entity type, holding server registrations
+ * - routes used by the Meteor SSO package to support reactive login updates
+ *
+ * You can administer servers at &lt;your_site_root&gt;/admin/structure/meteor.
+ */
+
+/**
+ * @} End of "defgroup meteor".
+ */
+
 use GuzzleHttp\Promise\PromiseInterface;
 
 /**
