@@ -26,3 +26,11 @@ meteor.backlink:
   requirements:
     _permission: 'access content'
 
+
+meteor.config_form:
+  path: '/admin/config/meteor/config'
+  defaults:
+    _form: '\Drupal\meteor\Form\ConfigForm'
+    _title: 'ConfigForm'
+  requirements:
+    _permission: 'access administration pages'

@@ -16,6 +16,7 @@ namespace Drupal\meteor\Controller;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ConfigManagerInterface;
+use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Session\SessionManagerInterface;
@@ -25,24 +26,42 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Serializer\SerializerInterface;
 
+/**
+ * Class ServiceController is a web service controller.
+ */
 class ServiceController extends ControllerBase {
 
   /**
+   * The account proxy for the current user.
+   *
    * @var \Drupal\Core\Session\AccountProxyInterface
    */
   protected $accountProxy;
 
   /**
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   * The meteor.settings configuration.
+   *
+   * @var \Drupal\Core\Config\ImmutableConfig
    */
-  protected $configFactory;
+  protected $meteorSettings;
 
   /**
+   * The user.settings configuration.
+   *
+   * @var \Drupal\Core\Config\ImmutableConfig
+   */
+  protected $userSettings;
+
+  /**
+   * The serializer service.
+   *
    * @var \Symfony\Component\Serializer\SerializerInterface
    */
   protected $serializer;
 
   /**
+   * The session manager service.
+   *
    * @var \Drupal\Core\Session\SessionManagerInterface
    */
   protected $sessionManager;
@@ -50,11 +69,21 @@ class ServiceController extends ControllerBase {
   /**
    * Constructor.
    *
-   * @param \Drupal\Core\Session\AccountInterface $account_proxy
+   * @param \Drupal\Core\Session\AccountProxyInterface $account_proxy
+   *   The account proxy for the current user.
+   * @param \Drupal\Core\Config\ImmutableConfig $user_settings
+   *   The user.settings configuration object.
+   * @param \Drupal\Core\Config\ImmutableConfig $meteor_settings
+   *   The meteor.settings configuration object.
+   * @param \Symfony\Component\Serializer\SerializerInterface $serializer
+   *   The serializer service.
+   * @param \Drupal\Core\Session\SessionManagerInterface $session_manager
+   *   The session manager service.
    */
-  public function __construct(AccountProxyInterface $account_proxy, ConfigFactoryInterface $config_factory, SerializerInterface $serializer, SessionManagerInterface $session_manager) {
+  public function __construct(AccountProxyInterface $account_proxy, ImmutableConfig $user_settings, ImmutableConfig $meteor_settings, SerializerInterface $serializer, SessionManagerInterface $session_manager) {
     $this->accountProxy = $account_proxy;
-    $this->configFactory = $config_factory;
+    $this->userSettings = $user_settings;
+    $this->meteorSettings = $meteor_settings;
     $this->serializer = $serializer;
     $this->sessionManager = $session_manager;
   }
@@ -63,8 +92,10 @@ class ServiceController extends ControllerBase {
    * Controller factory.
    *
    * @param \Symfony\Component\DependencyInjection\ContainerInterface $container
+   *   The DIC.
    *
    * @return static
+   *   The created controller object instance.
    */
   public static function create(ContainerInterface $container) {
     /** @var \Drupal\Core\Session\AccountProxyInterface $current_user */
@@ -73,12 +104,17 @@ class ServiceController extends ControllerBase {
     /** @var \Drupal\Core\Config\ConfigFactoryInterface $config_factory */
     $config_factory = $container->get('config.factory');
 
+    $user_settings = $config_factory->get('user.settings');
+
+    $meteor_settings = $config_factory->get('meteor.settings');
+
     /** @var \Symfony\Component\Serializer\SerializerInterface $serializer */
     $serializer = $container->get('serializer');
 
     /** @var \Drupal\Core\Session\SessionManagerInterface $session_manager */
     $session_manager = $container->get('session_manager');
-    return new static($current_user, $config_factory, $serializer, $session_manager);
+
+    return new static($current_user, $user_settings, $meteor_settings, $serializer, $session_manager);
   }
 
   /**
@@ -87,7 +123,7 @@ class ServiceController extends ControllerBase {
   public function siteInfo() {
     $result = [
       'cookieName' => $this->sessionManager->getName(),
-      'anonymousName' => $this->configFactory->get('user.settings')->get('anonymous'),
+      'anonymousName' => $this->userSettings->get('anonymous'),
     ];
 
     $result = $this->serializer->serialize($result, 'json');
@@ -96,6 +132,12 @@ class ServiceController extends ControllerBase {
     return $response;
   }
 
+  /**
+   * The controller for the meteor.whoami route.
+   *
+   * @return \Symfony\Component\HttpFoundation\Response
+   *   A JSON response.
+   */
   public function whoami() {
     $account = $this->accountProxy->getAccount();
     $uid = $account->id();
@@ -113,10 +155,17 @@ class ServiceController extends ControllerBase {
     return $response;
   }
 
+  /**
+   * The controller for the meteor.backlink route.
+   *
+   * @return array
+   *   The render array for the Meteor backlink.
+   */
   public function backlink() {
     $ret = [
-      '#markup' => \Drupal::l("Go to Meteor", Url::fromUri("http://drop8:3000/")),
+      '#markup' => \Drupal::l("Go to Meteor", Url::fromUri($this->meteorSettings->get('meteor_server'))),
     ];
     return $ret;
   }
+
 }

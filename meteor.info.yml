@@ -1,5 +1,7 @@
-name : meteor
-description: Figaro Back-Office
+name : Meteor
+description: Support for the Meteor fgm:drupal-sso package.
 type: module
 core: 8.x
-dependencies: serialization
+dependencies:
+  - serialization
+configure: meteor.config_form

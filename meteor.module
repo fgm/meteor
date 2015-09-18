@@ -1,17 +1,35 @@
 <?php
 
+/**
+ * @file
+ * The Meteor SSO support module.
+ */
+
 use GuzzleHttp\Promise\PromiseInterface;
 
+/**
+ * Shutdown function to perform a deferred HTTP request.
+ *
+ * @param \GuzzleHttp\Promise\PromiseInterface $promise
+ *   The promise to fulfill.
+ */
 function meteor_finalize_wait(PromiseInterface $promise) {
   $promise->wait(TRUE);
 }
 
+/**
+ * Send a notification to a Meteor server.
+ *
+ * @param int $delay
+ *   The delay to apply to the notification.
+ */
 function meteor_notify($delay) {
   $path = $delay ? 'updateUserDeferred' : 'updateUser';
 
   /** @var \GuzzleHttp\Client $client */
   $client = \Drupal::service('http_client');
-  $promise = $client->getAsync('http://drop8:3000/' . $path);
+  $host = \Drupal::config('meteor.settings')->get('meteor_server');
+  $promise = $client->getAsync("$host/$path");
   drupal_register_shutdown_function(function () use ($promise) {
     meteor_finalize_wait($promise);
   });
