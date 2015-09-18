@@ -2,3 +2,9 @@ meteor.backlink:
   title: 'Meteor demo'
   description: 'Demonstrate transparent Meteor login'
   route_name: meteor.backlink
+
+meteor.config_form:
+  title: 'Meteor'
+  description: 'Configure the Meteor module'
+  route_name: meteor.config_form
+  parent: system.admin_config_services
