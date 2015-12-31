@@ -12,7 +12,7 @@ Configuration
   cookie domain, this means using an explicit cookie domain in
   `sites/(site)/services.yml` like this:
 
-
+```yaml
     parameters:
       session.storage.options:
         #
@@ -30,6 +30,7 @@ Configuration
         # @default none
         cookie_domain: '.acme.dev'
         #
+```
 
 - Do not forget the leading dot on the cookie domain, as in the above example
 - Per the cookie specification, use at least a domain two levels deep as in the
