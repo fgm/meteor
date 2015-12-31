@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains Drupal\meteor\Form\ConfigForm.
+ * Contains \Drupal\meteor\Form\ConfigForm.
  */
 
 namespace Drupal\meteor\Form;
@@ -12,8 +12,6 @@ use Drupal\Core\Form\FormStateInterface;
 
 /**
  * Class ConfigForm.
- *
- * @package Drupal\meteor\Form
  */
 class ConfigForm extends ConfigFormBase {
 

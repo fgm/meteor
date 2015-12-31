@@ -2,7 +2,7 @@
 
 /**
  * @file
- * ReportsController.php
+ * Contains \Drupal\meteor\Controller\ReportsController.
  *
  * @author: Frédéric G. MARAND <fgm@osinet.fr>
  *
@@ -18,8 +18,6 @@ use Drupal\Core\Controller\ControllerBase;
 
 /**
  * Class ReportsController.
- *
- * @package Drupal\meteor\Controller
  */
 class ReportsController extends ControllerBase {
 
@@ -28,7 +26,7 @@ class ReportsController extends ControllerBase {
    */
   public function overview() {
     $ret = [
-      '#markup' => t('Overview R'),
+      '#markup' => t('Overview'),
     ];
     return $ret;
   }

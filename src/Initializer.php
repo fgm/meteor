@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Initializer.php
+ * Contains \Drupal\meteor\Initializer.
  *
  * @author: Frédéric G. MARAND <fgm@osinet.fr>
  *
@@ -14,8 +14,6 @@
 namespace Drupal\meteor;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
-use Symfony\Component\HttpKernel\Event\PostResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
@@ -28,22 +26,16 @@ class Initializer implements EventSubscriberInterface {
 
   /**
    * Event handler for Request.
-   *
-   * @param \Symfony\Component\HttpKernel\Event\GetResponseEvent $event
-   *   The request event.
    */
-  public function onRequest(GetResponseEvent $event) {
+  public function onRequest() {
     $this->savedHttpOnly = ini_get(static::VAR_NAME);
     ini_set(static::VAR_NAME, 0);
   }
 
   /**
    * Event handler for Terminate.
-   *
-   * @param \Symfony\Component\HttpKernel\Event\PostResponseEvent $event
-   *   The terminate event.
    */
-  public function onTerminate(PostResponseEvent $event) {
+  public function onTerminate() {
     ini_set(static::VAR_NAME, $this->savedHttpOnly);
   }
 

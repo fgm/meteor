@@ -14,7 +14,19 @@ use GuzzleHttp\Promise\PromiseInterface;
  *   The promise to fulfill.
  */
 function meteor_finalize_wait(PromiseInterface $promise) {
-  $promise->wait(TRUE);
+  try {
+    /** @var \GuzzleHttp\Psr7\Response $result */
+    $result = $promise->wait(TRUE);
+    $status = $result->getStatusCode();
+    $body = $result->getBody();
+    \Drupal::logger('meteor')->info("Notified got @status: @body", [
+      '@status' => $status,
+      '@body' => $body,
+    ]);
+  }
+  catch (\GuzzleHttp\Exception\ConnectException $e) {
+    watchdog_exception('meteor', $e);
+  }
 }
 
 /**
@@ -30,6 +42,11 @@ function meteor_notify($delay) {
   $client = \Drupal::service('http_client');
   $host = \Drupal::config('meteor.settings')->get('meteor_server');
   $promise = $client->getAsync("$host/$path");
+  \Drupal::logger('meteor')->info("Notified @host/@path/@delay", [
+    '@host' => $host,
+    '@path' => $path,
+    '@delay' => $delay,
+  ]);
   drupal_register_shutdown_function(function () use ($promise) {
     meteor_finalize_wait($promise);
   });

@@ -2,7 +2,7 @@
 
 /**
  * @file
- * ServiceController.php
+ * Contains \Drupal\meteor\Controller\ServiceController.
  *
  * @author: Frédéric G. MARAND <fgm@osinet.fr>
  *
@@ -14,14 +14,12 @@
 namespace Drupal\meteor\Controller;
 
 
-use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Link;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Session\SessionManagerInterface;
 use Drupal\Core\Url;
-use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -141,12 +139,14 @@ class ServiceController extends ControllerBase {
   public function whoami() {
     $account = $this->accountProxy->getAccount();
     $uid = $account->id();
-    $name = $account->getUsername();
+    $name = $account->getAccountName();
+    $display_name = $account->getDisplayName();
 
     $roles = $this->accountProxy->getRoles();
     $result = $this->serializer->serialize([
       'uid' => $uid,
       'name' => $name,
+      'displayName' => $display_name,
       'roles' => $roles,
     ], 'json');
 
@@ -162,9 +162,8 @@ class ServiceController extends ControllerBase {
    *   The render array for the Meteor backlink.
    */
   public function backlink() {
-    $ret = [
-      '#markup' => \Drupal::l("Go to Meteor", Url::fromUri($this->meteorSettings->get('meteor_server'))),
-    ];
+    $server_uri = Url::fromUri($this->meteorSettings->get('meteor_server'));
+    $ret = Link::fromTextAndUrl("Go to Meteor", $server_uri)->toRenderable();
     return $ret;
   }
 
