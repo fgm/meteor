@@ -20,9 +20,10 @@ use Drupal\Core\Link;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Session\SessionManagerInterface;
 use Drupal\Core\Url;
+use Drupal\meteor\UserInfoEvent;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
  * Class ServiceController is a web service controller.
@@ -65,6 +66,13 @@ class ServiceController extends ControllerBase {
   protected $sessionManager;
 
   /**
+   * The event dispatcher service.
+   *
+   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   */
+  protected $eventDispatcher;
+
+  /**
    * Constructor.
    *
    * @param \Drupal\Core\Session\AccountProxyInterface $account_proxy
@@ -77,13 +85,15 @@ class ServiceController extends ControllerBase {
    *   The serializer service.
    * @param \Drupal\Core\Session\SessionManagerInterface $session_manager
    *   The session manager service.
+   * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
+   *   The event dispatcher service.
    */
-  public function __construct(AccountProxyInterface $account_proxy, ImmutableConfig $user_settings, ImmutableConfig $meteor_settings, SerializerInterface $serializer, SessionManagerInterface $session_manager) {
+  public function __construct(AccountProxyInterface $account_proxy, ImmutableConfig $user_settings, ImmutableConfig $meteor_settings, SessionManagerInterface $session_manager, EventDispatcherInterface $event_dispatcher) {
     $this->accountProxy = $account_proxy;
     $this->userSettings = $user_settings;
     $this->meteorSettings = $meteor_settings;
-    $this->serializer = $serializer;
     $this->sessionManager = $session_manager;
+    $this->eventDispatcher = $event_dispatcher;
   }
 
   /**
@@ -99,20 +109,20 @@ class ServiceController extends ControllerBase {
     /** @var \Drupal\Core\Session\AccountProxyInterface $current_user */
     $current_user = $container->get('current_user');
 
-    /* @var \Drupal\Core\Config\ConfigFactoryInterface $config_factory */
+    /** @var \Drupal\Core\Config\ConfigFactoryInterface $config_factory */
     $config_factory = $container->get('config.factory');
 
     $user_settings = $config_factory->get('user.settings');
 
     $meteor_settings = $config_factory->get('meteor.settings');
 
-    /** @var \Symfony\Component\Serializer\SerializerInterface $serializer */
-    $serializer = $container->get('serializer');
-
     /** @var \Drupal\Core\Session\SessionManagerInterface $session_manager */
     $session_manager = $container->get('session_manager');
 
-    return new static($current_user, $user_settings, $meteor_settings, $serializer, $session_manager);
+    /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher */
+    $event_dispatcher = $container->get('event_dispatcher');
+
+    return new static($current_user, $user_settings, $meteor_settings, $session_manager, $event_dispatcher);
   }
 
   /**
@@ -124,10 +134,7 @@ class ServiceController extends ControllerBase {
       'anonymousName' => $this->userSettings->get('anonymous'),
     ];
 
-    $result = $this->serializer->serialize($result, 'json');
-    $response = new Response($result, Response::HTTP_OK);
-    $response->headers->set('Content-type', 'application/json');
-    return $response;
+    return new JsonResponse($result);
   }
 
   /**
@@ -141,18 +148,20 @@ class ServiceController extends ControllerBase {
     $uid = $account->id();
     $name = $account->getAccountName();
     $display_name = $account->getDisplayName();
-
     $roles = $this->accountProxy->getRoles();
-    $result = $this->serializer->serialize([
+
+    $account_data = [
       'uid' => $uid,
       'name' => $name,
       'displayName' => $display_name,
       'roles' => $roles,
-    ], 'json');
+    ];
 
-    $response = new Response($result, Response::HTTP_OK);
-    $response->headers->set('Content-type', 'application/json');
-    return $response;
+    $e = new UserInfoEvent($account_data);
+    /** @var \Drupal\meteor\UserInfoEvent $event */
+    $event = $this->eventDispatcher->dispatch('meteor.user_info', $e);
+    $new_account_data = $event->getUserInfo();
+    return new JsonResponse($new_account_data);
   }
 
   /**
