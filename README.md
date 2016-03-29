@@ -1,7 +1,8 @@
-This module exists to support the Meteor fgm:drupal-sso package: neither is of
-any use without the other one.
+This module exists to support the Meteor 1.2 [accounts-drupal] package, as well as the older
+  [fgm:drupal-sso] Meteor 0.9 to 1.2 package.
 
-See more information on https://atmospherejs.com/fgm/drupal-sso
+[accounts-drupal]: https://github.com/FGM/accounts-drupal
+[fgm:drupal-sso]: https://atmospherejs.com/fgm/drupal-sso
 
 
 Configuration

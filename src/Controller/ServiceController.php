@@ -99,7 +99,7 @@ class ServiceController extends ControllerBase {
     /** @var \Drupal\Core\Session\AccountProxyInterface $current_user */
     $current_user = $container->get('current_user');
 
-    /** @var \Drupal\Core\Config\ConfigFactoryInterface $config_factory */
+    /* @var \Drupal\Core\Config\ConfigFactoryInterface $config_factory */
     $config_factory = $container->get('config.factory');
 
     $user_settings = $config_factory->get('user.settings');
