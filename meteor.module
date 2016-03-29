@@ -71,6 +71,15 @@ function meteor_user_logout($account) {
  * Implements hook_user_login().
  */
 function meteor_user_login($account) {
-  /** @var \GuzzleHttp\Client $client */
+  meteor_notify(1000);
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_update().
+ */
+function meteor_user_update(UserInterface $account) {
+  // Deletion is not entirely complete at this point: wait for one second for a
+  // better chance for the transaction to be complete and user cache to be
+  // flushed.
   meteor_notify(1000);
 }
