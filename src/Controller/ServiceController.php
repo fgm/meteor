@@ -81,14 +81,15 @@ class ServiceController extends ControllerBase {
    *   The user.settings configuration object.
    * @param \Drupal\Core\Config\ImmutableConfig $meteor_settings
    *   The meteor.settings configuration object.
-   * @param \Symfony\Component\Serializer\SerializerInterface $serializer
-   *   The serializer service.
    * @param \Drupal\Core\Session\SessionManagerInterface $session_manager
    *   The session manager service.
    * @param \Symfony\Component\EventDispatcher\EventDispatcherInterface $event_dispatcher
    *   The event dispatcher service.
    */
-  public function __construct(AccountProxyInterface $account_proxy, ImmutableConfig $user_settings, ImmutableConfig $meteor_settings, SessionManagerInterface $session_manager, EventDispatcherInterface $event_dispatcher) {
+  public function __construct(AccountProxyInterface $account_proxy,
+    ImmutableConfig $user_settings, ImmutableConfig $meteor_settings,
+    SessionManagerInterface $session_manager, EventDispatcherInterface $event_dispatcher
+  ) {
     $this->accountProxy = $account_proxy;
     $this->userSettings = $user_settings;
     $this->meteorSettings = $meteor_settings;

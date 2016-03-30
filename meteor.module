@@ -16,7 +16,7 @@ use GuzzleHttp\Promise\PromiseInterface;
  */
 function meteor_finalize_wait(PromiseInterface $promise) {
   try {
-    /** @var \GuzzleHttp\Psr7\Response $result */
+    /* @var \GuzzleHttp\Psr7\Response $result */
     $result = $promise->wait(TRUE);
     $status = $result->getStatusCode();
     $body = $result->getBody();

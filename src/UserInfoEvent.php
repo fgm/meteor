@@ -27,7 +27,7 @@ class UserInfoEvent extends Event {
    * @param array $user_info
    *   The user informations.
    */
-  public function __construct($user_info) {
+  public function __construct(array $user_info) {
     $this->setUserInfo($user_info);
   }
 
@@ -44,7 +44,7 @@ class UserInfoEvent extends Event {
    * @param array $user_info
    *   The user informations.
    */
-  public function setUserInfo($user_info) {
+  public function setUserInfo(array $user_info) {
     $this->userInfo = $user_info;
   }
 

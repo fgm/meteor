@@ -1,5 +1,11 @@
 services:
+  # Initializes cookie settings to avoid them being HTTP only.
   meteor_initializer:
     class: Drupal\meteor\Initializer
+    tags:
+      - { name: 'event_subscriber' }
+  # Reacts to entity types and storage events.
+  meteor_entity_listener:
+    class: Drupal\meteor\EventListener
     tags:
       - { name: 'event_subscriber' }
