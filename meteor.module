@@ -3,10 +3,50 @@
 /**
  * @file
  * The Meteor SSO support module.
+ *
+ * @see OPERATION.md
  */
 
 use Drupal\user\UserInterface;
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Promise\PromiseInterface;
+
+/**
+ * Implements hook_field_storage_delete().
+ *
+ * A field was deleted. If it was on the user entity:
+ * - all user accounts need to refresh their "whoami" information,
+ * - they do not need to renew their login.
+ */
+function meteor_field_storage_config_delete(Drupal\Core\Entity\EntityInterface $entity) {
+  if ($entity->getEntityTypeId() != 'user') {
+    return;
+  }
+  ksm(__METHOD__, get_defined_vars());
+}
+
+/**
+ * Implements hook_field_storage_insert().
+ *
+ * A field was added.
+ */
+function meteor_field_storage_config_insert(Drupal\Core\Entity\EntityInterface $entity) {
+  if ($entity->getEntityTypeId() != 'user') {
+    return;
+  }
+  ksm(__METHOD__, get_defined_vars());
+}
+
+/**
+ * Implements hook_field_storage_update().
+ */
+function meteor_field_storage_config_update(Drupal\Core\Entity\EntityInterface $entity) {
+  if ($entity->getEntityTypeId() != 'user') {
+    return;
+  }
+  ksm(__METHOD__, get_defined_vars());
+}
+
 
 /**
  * Shutdown function to perform a deferred HTTP request.
@@ -22,10 +62,10 @@ function meteor_finalize_wait(PromiseInterface $promise) {
     $body = $result->getBody();
     \Drupal::logger('meteor')->info("Notified got @status: @body", [
       '@status' => $status,
-      '@body' => $body,
+      '@body' => (string) $body,
     ]);
   }
-  catch (\GuzzleHttp\Exception\ConnectException $e) {
+  catch (ConnectException $e) {
     watchdog_exception('meteor', $e);
   }
 }
@@ -33,20 +73,20 @@ function meteor_finalize_wait(PromiseInterface $promise) {
 /**
  * Send a notification to a Meteor server.
  *
- * @param int $delay
- *   The delay to apply to the notification.
+ * @param array $query
+ *   The query params of the notification call to meteor.
  */
-function meteor_notify($delay) {
-  $path = $delay ? 'updateUserDeferred' : 'updateUser';
+function meteor_notify($query = []) {
+  $notifier = \Drupal::service('meteor.notifier');
 
   /** @var \GuzzleHttp\Client $client */
   $client = \Drupal::service('http_client');
   $host = \Drupal::config('meteor.settings')->get('meteor_server');
-  $promise = $client->getAsync("$host/$path");
-  \Drupal::logger('meteor')->info("Notified @host/@path/@delay", [
-    '@host' => $host,
+  $path = 'drupalUserEvent';
+  $promise = $client->getAsync("$host/$path", ['query' => $query]);
+  \Drupal::logger('meteor')->info("Notify meteor on @path with @query params.", [
     '@path' => $path,
-    '@delay' => $delay,
+    '@query' => $query ? var_export($query, TRUE) : 'no',
   ]);
   drupal_register_shutdown_function(function () use ($promise) {
     meteor_finalize_wait($promise);
@@ -57,21 +97,24 @@ function meteor_notify($delay) {
  * Implements hook_user_delete().
  */
 function meteor_user_delete(UserInterface $account) {
-  meteor_notify(0);
+  ksm(__METHOD__, func_get_args());
+  meteor_notify(['userId' => $account->id(), 'event' => 'deleted']);
 }
 
 /**
  * Implements hook_user_logout().
  */
 function meteor_user_logout($account) {
-  meteor_notify(0);
+  ksm(__METHOD__, func_get_args());
+  meteor_notify(['userId' => $account->id(), 'event' => 'logout']);
 }
 
 /**
  * Implements hook_user_login().
  */
 function meteor_user_login($account) {
-  meteor_notify(1000);
+  ksm(__METHOD__, func_get_args());
+  meteor_notify(['userId' => $account->id(), 'event' => 'login', 'delay' => 1000]);
 }
 
 /**
@@ -81,5 +124,7 @@ function meteor_user_update(UserInterface $account) {
   // Deletion is not entirely complete at this point: wait for one second for a
   // better chance for the transaction to be complete and user cache to be
   // flushed.
-  meteor_notify(1000);
+  ksm(__METHOD__, func_get_args());
+  meteor_notify(['userId' => $account->id(), 'event' => 'updated', 'delay' => 1000]);
 }
+

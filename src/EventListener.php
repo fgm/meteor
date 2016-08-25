@@ -62,6 +62,8 @@ class EventListener implements EventSubscriberInterface {
    *   The name of the event.
    */
   public function onEntityTypeUpdate(EntityTypeEvent $event, $event_name) {
+    var_dump($event_name);
+    ksm(__METHOD__, get_defined_vars());
     $this->etuCount++;
   }
 
@@ -74,6 +76,8 @@ class EventListener implements EventSubscriberInterface {
    *   The name of the event.
    */
   public function onFieldStorageDefinitionUpdate(FieldStorageDefinitionEvent $event, $event_name) {
+    var_dump($event_name);
+    ksm(__METHOD__, get_defined_vars());
     $this->fsduCount++;
   }
 
@@ -81,9 +85,10 @@ class EventListener implements EventSubscriberInterface {
    * Destructor: send a refresh request if needed.
    */
   public function __destruct() {
+    var_dump(__METHOD__);
     error_log($this->etuCount . " " . $this->fsduCount . "\n", 3, "/tmp/php_errors.log");
     if ($this->etuCount + $this->fsduCount > 0) {
-      meteor_notify(0);
+      meteor_notify();
     }
   }
 
