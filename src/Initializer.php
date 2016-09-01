@@ -1,16 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\meteor\Initializer.
- *
- * @author: Frédéric G. MARAND <fgm@osinet.fr>
- *
- * @copyright (c) 2015 Ouest Systèmes Informatiques (OSInet).
- *
- * @license General Public License version 2 or later
- */
-
 namespace Drupal\meteor;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -18,6 +7,12 @@ use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
  * Class Initializer forces session cookies not to be HTTP Only.
+ *
+ * @author: Frédéric G. MARAND <fgm@osinet.fr>
+ *
+ * @copyright (c) 2015 Ouest Systèmes Informatiques (OSInet).
+ *
+ * @license General Public License version 2 or later
  */
 class Initializer implements EventSubscriberInterface {
   const VAR_NAME = 'session.cookie_httponly';

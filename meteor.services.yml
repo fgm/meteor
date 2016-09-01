@@ -4,8 +4,10 @@ services:
     arguments: ['meteor']
 
   # Reacts to entity types and storage events.
-  meteor.entity_listener:
-    class: Drupal\meteor\EventListener
+  meteor.identity_listener:
+    class: Drupal\meteor\IdentityListener
+    arguments:
+      - '@logger.channel.meteor'
     tags:
       - { name: 'event_subscriber' }
 

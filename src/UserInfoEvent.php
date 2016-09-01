@@ -1,16 +1,17 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\Meteor\UserInfoEvent.
- */
-
 namespace Drupal\meteor;
 
 use Symfony\Component\EventDispatcher\Event;
 
 /**
  * Represents user information as event.
+ *
+ * @author: Frédéric G. MARAND <fgm@osinet.fr>
+ *
+ * @copyright (c) 2015 Ouest Systèmes Informatiques (OSInet).
+ *
+ * @license General Public License version 2 or later
  */
 class UserInfoEvent extends Event {
 

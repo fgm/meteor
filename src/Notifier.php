@@ -1,8 +1,16 @@
 <?php
 
+namespace Drupal\meteor;
+
+use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\Session\AccountInterface;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Promise\PromiseInterface;
+use Psr\Log\LoggerInterface;
+
 /**
- * @file
- * Contains \Drupal\meteor\Notifier.
+ * Class Notifier sends notifications to the Meteor instance.
  *
  * @author: Frédéric G. MARAND <fgm@osinet.fr>
  *
@@ -10,18 +18,8 @@
  *
  * @license General Public License version 2 or later
  */
-
-namespace Drupal\meteor;
-
-use Drupal\Core\Config\ConfigFactory;
-use Drupal\Core\Config\ImmutableConfig;
-use GuzzleHttp\Client;
-use Psr\Log\LoggerInterface;
-
-/**
- * Class Notifier sends notifications to the Meteor instance.
- */
 class Notifier {
+  const PATH = 'drupalUserEvent';
 
   /**
    * The http_client service.
@@ -33,7 +31,7 @@ class Notifier {
   /**
    * The immutable module configuration.
    *
-   * @var \Drupal\Core\Config\Config|\Drupal\Core\Config\ImmutableConfig
+   * @var \Drupal\Core\Config\ImmutableConfig
    */
   protected $config;
 
@@ -50,7 +48,7 @@ class Notifier {
    * @param \GuzzleHttp\Client $client
    *   The http_client service.
    * @param \Drupal\Core\Config\ImmutableConfig $config
-   * The immutable module configuration.
+   *   The immutable module configuration.
    * @param \Psr\Log\LoggerInterface $logger
    *   The module logger channel.
    */
@@ -59,4 +57,64 @@ class Notifier {
     $this->config = $config;
     $this->logger = $logger;
   }
+
+  /**
+   * Send a notification to a Meteor server instance.
+   *
+   * @param string $event
+   *   The name of the event to notify the instance about.
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   Optional. The account triggering the event.
+   * @param int $usDelay
+   *   Optional. The delay after which to act on the notification.
+   */
+  public function notify($event, AccountInterface $account = NULL, $usDelay = 0) {
+    $query = [
+      'event' => strval($event),
+    ];
+
+    $userId = $account instanceof AccountInterface ? intval($account->id()) : NULL;
+    if (isset($userId)) {
+      $query['userId'] = $userId;
+    }
+
+    if (isset($usDelay)) {
+      $query['delay'] = abs(intval($usDelay));
+    }
+
+    $host = $this->config->get('meteor_server');
+    $url = $host . '/' . static::PATH;
+    $promise = $this->client->getAsync($url, ['query' => $query]);
+    $this->logger->info("Notify meteor on @url with query @query.", [
+      '@url' => $url,
+      '@query' => $query ? var_export($query, TRUE) : '(empty)',
+    ]);
+    drupal_register_shutdown_function(function () use ($promise) {
+      $this->finalizeWait($promise);
+    });
+
+  }
+
+  /**
+   * Shutdown function to perform a deferred HTTP request.
+   *
+   * @param \GuzzleHttp\Promise\PromiseInterface $promise
+   *   The promise to fulfill.
+   */
+  public function finalizeWait(PromiseInterface $promise) {
+    try {
+      /* @var \GuzzleHttp\Psr7\Response $result */
+      $result = $promise->wait(TRUE);
+      $status = $result->getStatusCode();
+      $body = $result->getBody();
+      $this->logger->info("Notified got @status: @body", [
+        '@status' => $status,
+        '@body' => strval($body),
+      ]);
+    }
+    catch (ConnectException $e) {
+      watchdog_exception('meteor', $e);
+    }
+  }
+
 }
