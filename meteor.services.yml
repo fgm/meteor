@@ -1,11 +1,31 @@
 services:
+  logger.channel.meteor:
+    parent: logger.channel_base
+    arguments: ['meteor']
+
+  # Reacts to entity types and storage events.
+  meteor.identity_listener:
+    class: Drupal\meteor\IdentityListener
+    arguments:
+      - '@logger.channel.meteor'
+    tags:
+      - { name: 'event_subscriber' }
+      - { name: 'needs_destruction' }
+
   # Initializes cookie settings to avoid them being HTTP only.
-  meteor_initializer:
+  meteor.initializer:
     class: Drupal\meteor\Initializer
     tags:
       - { name: 'event_subscriber' }
-  # Reacts to entity types and storage events.
-  meteor_entity_listener:
-    class: Drupal\meteor\EventListener
-    tags:
-      - { name: 'event_subscriber' }
+
+  meteor.notifier:
+    class: Drupal\meteor\Notifier
+    arguments:
+      - '@http_client'
+      - '@meteor.settings'
+      - '@logger.channel.meteor'
+
+  meteor.settings:
+    class: Drupal\Core\Config\ImmutableConfig
+    factory: ['@config.factory', get]
+    arguments: ['meteor.settings']

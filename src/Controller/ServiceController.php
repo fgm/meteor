@@ -1,18 +1,6 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\meteor\Controller\ServiceController.
- *
- * @author: Frédéric G. MARAND <fgm@osinet.fr>
- *
- * @copyright (c) 2015 Ouest Systèmes Informatiques (OSInet).
- *
- * @license General Public License version 2 or later
- */
-
 namespace Drupal\meteor\Controller;
-
 
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Controller\ControllerBase;
@@ -27,6 +15,12 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
  * Class ServiceController is a web service controller.
+ *
+ * @author: Frédéric G. MARAND <fgm@osinet.fr>
+ *
+ * @copyright (c) 2015 Ouest Systèmes Informatiques (OSInet).
+ *
+ * @license General Public License version 2 or later
  */
 class ServiceController extends ControllerBase {
 
@@ -87,8 +81,10 @@ class ServiceController extends ControllerBase {
    *   The event dispatcher service.
    */
   public function __construct(AccountProxyInterface $account_proxy,
-    ImmutableConfig $user_settings, ImmutableConfig $meteor_settings,
-    SessionManagerInterface $session_manager, EventDispatcherInterface $event_dispatcher
+    ImmutableConfig $user_settings,
+    ImmutableConfig $meteor_settings,
+    SessionManagerInterface $session_manager,
+    EventDispatcherInterface $event_dispatcher
   ) {
     $this->accountProxy = $account_proxy;
     $this->userSettings = $user_settings;

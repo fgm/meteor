@@ -1,26 +1,23 @@
 <?php
-/**
- * @file
- * Contains \Drupal\meteor\EventListener.
- *
- * @author: Frédéric G. MARAND <fgm@osinet.fr>
- *
- * @copyright (c) 2016 Ouest Systèmes Informatiques (OSInet).
- *
- * @license General Public License version 2 or later
- */
 
 namespace Drupal\meteor;
 
-
+use Drupal\Core\DestructableInterface;
 use Drupal\Core\Entity\EntityTypeEvent;
 use Drupal\Core\Entity\EntityTypeEvents;
 use Drupal\Core\Field\FieldStorageDefinitionEvent;
 use Drupal\Core\Field\FieldStorageDefinitionEvents;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Class EventListener listens to entity type and field storage update events.
+ *
+ * @author: Frédéric G. MARAND <fgm@osinet.fr>
+ *
+ * @copyright (c) 2015-2016 Ouest Systèmes Informatiques (OSInet).
+ *
+ * @license General Public License version 2 or later
  *
  * Its goal is to force a login refresh on any of these events: it seems too
  * complex to analyze the changes before deciding, considering how rare such
@@ -29,7 +26,16 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * To avoid multiple refreshes, it only accumulates events, triggering the
  * actual refresh on destruction only if at least one update event occurred.
  */
-class EventListener implements EventSubscriberInterface {
+class IdentityListener implements EventSubscriberInterface, DestructableInterface {
+  const ENTITY_FIELD_UPDATE = 'entity_field_update';
+  const FIELD_DELETE = 'field_delete';
+  const FIELD_INSERT = 'field_insert';
+  const FIELD_UPDATE = 'field_update';
+  const USER_DELETE = 'user_delete';
+  const USER_LOGIN = 'user_login';
+  const USER_LOGOUT = 'user_logout';
+  const USER_UPDATE = 'user_update';
+
   /**
    * The number of entity type update events received.
    *
@@ -45,10 +51,31 @@ class EventListener implements EventSubscriberInterface {
   public $fsduCount = 0;
 
   /**
+   * The logger.channel.meteor channel.
+   *
+   * @var \Psr\Log\LoggerInterface
+   */
+  protected $logger;
+
+  /**
+   * IdentityListener constructor.
+   *
+   * @param \Psr\Log\LoggerInterface $logger
+   *   The logger.channel.meteor channel.
+   */
+  public function __construct(LoggerInterface $logger) {
+    $this->logger = $logger;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public static function getSubscribedEvents() {
+    $events[EntityTypeEvents::CREATE][] = ["onEntityTypeUpdate", 100];
+    $events[EntityTypeEvents::DELETE][] = ["onEntityTypeUpdate", 100];
     $events[EntityTypeEvents::UPDATE][] = ["onEntityTypeUpdate", 100];
+    $events[FieldStorageDefinitionEvents::CREATE] = ["onFieldStorageDefinitionUpdate", 100];
+    $events[FieldStorageDefinitionEvents::DELETE] = ["onFieldStorageDefinitionUpdate", 100];
     $events[FieldStorageDefinitionEvents::UPDATE] = ["onFieldStorageDefinitionUpdate", 100];
     return $events;
   }
@@ -78,12 +105,18 @@ class EventListener implements EventSubscriberInterface {
   }
 
   /**
-   * Destructor: send a refresh request if needed.
+   * {@inheritdoc}
+   *
+   * - Send a refresh request if needed.
    */
-  public function __destruct() {
-    error_log($this->etuCount . " " . $this->fsduCount . "\n", 3, "/tmp/php_errors.log");
+  public function destruct() {
     if ($this->etuCount + $this->fsduCount > 0) {
-      meteor_notify(0);
+      $this->logger->debug("Entity type updates: @etu, Field storage updates: @fsdu.", [
+        '@etu' => $this->etuCount,
+        '@fsdu' => $this->fsduCount,
+      ]);
+
+      _meteor_notify(IdentityListener::ENTITY_FIELD_UPDATE);
     }
   }
 

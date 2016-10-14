@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\meteor\Form\ConfigForm.
- */
-
 namespace Drupal\meteor\Form;
 
 use Drupal\Core\Form\ConfigFormBase;
@@ -20,7 +15,7 @@ class ConfigForm extends ConfigFormBase {
    */
   protected function getEditableConfigNames() {
     return [
-      'meteor.settings'
+      'meteor.settings',
     ];
   }
 

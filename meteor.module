@@ -3,83 +3,111 @@
 /**
  * @file
  * The Meteor SSO support module.
- */
-
-use Drupal\user\UserInterface;
-use GuzzleHttp\Promise\PromiseInterface;
-
-/**
- * Shutdown function to perform a deferred HTTP request.
  *
- * @param \GuzzleHttp\Promise\PromiseInterface $promise
- *   The promise to fulfill.
+ * @see OPERATION.md
  */
-function meteor_finalize_wait(PromiseInterface $promise) {
-  try {
-    /* @var \GuzzleHttp\Psr7\Response $result */
-    $result = $promise->wait(TRUE);
-    $status = $result->getStatusCode();
-    $body = $result->getBody();
-    \Drupal::logger('meteor')->info("Notified got @status: @body", [
-      '@status' => $status,
-      '@body' => $body,
-    ]);
-  }
-  catch (\GuzzleHttp\Exception\ConnectException $e) {
-    watchdog_exception('meteor', $e);
-  }
-}
+
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\field\FieldStorageConfigInterface;
+use Drupal\meteor\IdentityListener;
+use Drupal\user\UserInterface;
 
 /**
  * Send a notification to a Meteor server.
  *
+ * @param string $event
+ *   The name of an event: an EventListener string constant.
+ * @param \Drupal\Core\Session\AccountInterface $account
+ *   Optional. A user account.
  * @param int $delay
- *   The delay to apply to the notification.
+ *   Optional. A delay to send the notification.
+ *
+ * @see \Drupal\meteor\IdentityListener
  */
-function meteor_notify($delay) {
-  $path = $delay ? 'updateUserDeferred' : 'updateUser';
+function _meteor_notify($event, AccountInterface $account = NULL, $delay = 0) {
+  /** @var \Drupal\meteor\Notifier $notifier */
+  $notifier = \Drupal::service('meteor.notifier');
+  $notifier->notify($event, $account, $delay);
+}
 
-  /** @var \GuzzleHttp\Client $client */
-  $client = \Drupal::service('http_client');
-  $host = \Drupal::config('meteor.settings')->get('meteor_server');
-  $promise = $client->getAsync("$host/$path");
-  \Drupal::logger('meteor')->info("Notified @host/@path/@delay", [
-    '@host' => $host,
-    '@path' => $path,
-    '@delay' => $delay,
-  ]);
-  drupal_register_shutdown_function(function () use ($promise) {
-    meteor_finalize_wait($promise);
-  });
+/**
+ * Implements hook_field_storage_delete().
+ *
+ * One or more fields were deleted. If it happend on the user entity:
+ * - all user accounts need to refresh their "whoami" information,
+ * - they do not need to renew their login.
+ */
+function meteor_field_storage_config_delete(FieldStorageConfigInterface $entity) {
+  if ($entity->getTargetEntityTypeId() != 'user') {
+    return;
+  }
+
+  _meteor_notify(IdentityListener::FIELD_DELETE);
+}
+
+/**
+ * Implements hook_field_storage_insert().
+ *
+ * One or more fields were added. If it happend on the user entity:
+ * - all user accounts need to refresh their "whoami" information,
+ * - they do not need to renew their login.
+ */
+function meteor_field_storage_config_insert(FieldStorageConfigInterface $entity) {
+  if ($entity->getTargetEntityTypeId() != 'user') {
+    return;
+  }
+
+  _meteor_notify(IdentityListener::FIELD_INSERT);
+}
+
+/**
+ * Implements hook_field_storage_update().
+ *
+ * One or more fields were modified. If it happened on the user entity:
+ * - all user accounts need to refresh their "whoami" information,
+ * - they do not need to renew their login.
+ */
+function meteor_field_storage_config_update(FieldStorageConfigInterface $entity) {
+  if ($entity->getTargetEntityTypeId() != 'user') {
+    return;
+  }
+
+  _meteor_notify(IdentityListener::FIELD_UPDATE);
 }
 
 /**
  * Implements hook_user_delete().
+ *
+ * Note: this is the hook used on user cancel-as-delete.
  */
-function meteor_user_delete(UserInterface $account) {
-  meteor_notify(0);
-}
-
-/**
- * Implements hook_user_logout().
- */
-function meteor_user_logout($account) {
-  meteor_notify(0);
+function meteor_user_delete(AccountInterface $account) {
+  _meteor_notify(IdentityListener::USER_DELETE, $account);
 }
 
 /**
  * Implements hook_user_login().
  */
-function meteor_user_login($account) {
-  meteor_notify(1000);
+function meteor_user_login(AccountInterface $account) {
+  _meteor_notify(IdentityListener::USER_LOGIN, $account, 1000);
+}
+
+/**
+ * Implements hook_user_logout().
+ */
+function meteor_user_logout(AccountProxyInterface $account) {
+  _meteor_notify(IdentityListener::USER_LOGOUT, $account->getAccount());
 }
 
 /**
  * Implements hook_ENTITY_TYPE_update().
+ *
+ * Note: this is the hook used on user cancel-as-blocked.
+ *
+ * Deletion is not entirely complete at this point: wait for one second for a
+ * better chance for the transaction to be complete and user cache to be
+ * flushed.
  */
 function meteor_user_update(UserInterface $account) {
-  // Deletion is not entirely complete at this point: wait for one second for a
-  // better chance for the transaction to be complete and user cache to be
-  // flushed.
-  meteor_notify(1000);
+  _meteor_notify(IdentityListener::USER_UPDATE, $account, 1000);
 }
