@@ -10,6 +10,7 @@ services:
       - '@logger.channel.meteor'
     tags:
       - { name: 'event_subscriber' }
+      - { name: 'needs_destruction' }
 
   # Initializes cookie settings to avoid them being HTTP only.
   meteor.initializer:

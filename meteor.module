@@ -7,9 +7,9 @@
  * @see OPERATION.md
  */
 
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\field\FieldStorageConfigInterface;
 use Drupal\meteor\IdentityListener;
 use Drupal\user\UserInterface;
 
@@ -38,8 +38,8 @@ function _meteor_notify($event, AccountInterface $account = NULL, $delay = 0) {
  * - all user accounts need to refresh their "whoami" information,
  * - they do not need to renew their login.
  */
-function meteor_field_storage_config_delete(EntityInterface $entity) {
-  if ($entity->getEntityTypeId() != 'user') {
+function meteor_field_storage_config_delete(FieldStorageConfigInterface $entity) {
+  if ($entity->getTargetEntityTypeId() != 'user') {
     return;
   }
 
@@ -53,8 +53,8 @@ function meteor_field_storage_config_delete(EntityInterface $entity) {
  * - all user accounts need to refresh their "whoami" information,
  * - they do not need to renew their login.
  */
-function meteor_field_storage_config_insert(EntityInterface $entity) {
-  if ($entity->getEntityTypeId() != 'user') {
+function meteor_field_storage_config_insert(FieldStorageConfigInterface $entity) {
+  if ($entity->getTargetEntityTypeId() != 'user') {
     return;
   }
 
@@ -64,12 +64,12 @@ function meteor_field_storage_config_insert(EntityInterface $entity) {
 /**
  * Implements hook_field_storage_update().
  *
- * One or more fields were modified. If it happend on the user entity:
+ * One or more fields were modified. If it happened on the user entity:
  * - all user accounts need to refresh their "whoami" information,
  * - they do not need to renew their login.
  */
-function meteor_field_storage_config_update(EntityInterface $entity) {
-  if ($entity->getEntityTypeId() != 'user') {
+function meteor_field_storage_config_update(FieldStorageConfigInterface $entity) {
+  if ($entity->getTargetEntityTypeId() != 'user') {
     return;
   }
 

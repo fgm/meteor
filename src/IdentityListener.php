@@ -2,6 +2,7 @@
 
 namespace Drupal\meteor;
 
+use Drupal\Core\DestructableInterface;
 use Drupal\Core\Entity\EntityTypeEvent;
 use Drupal\Core\Entity\EntityTypeEvents;
 use Drupal\Core\Field\FieldStorageDefinitionEvent;
@@ -14,7 +15,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  *
  * @author: Frédéric G. MARAND <fgm@osinet.fr>
  *
- * @copyright (c) 2015 Ouest Systèmes Informatiques (OSInet).
+ * @copyright (c) 2015-2016 Ouest Systèmes Informatiques (OSInet).
  *
  * @license General Public License version 2 or later
  *
@@ -25,15 +26,15 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
  * To avoid multiple refreshes, it only accumulates events, triggering the
  * actual refresh on destruction only if at least one update event occurred.
  */
-class IdentityListener implements EventSubscriberInterface {
+class IdentityListener implements EventSubscriberInterface, DestructableInterface {
   const ENTITY_FIELD_UPDATE = 'entity_field_update';
   const FIELD_DELETE = 'field_delete';
   const FIELD_INSERT = 'field_insert';
   const FIELD_UPDATE = 'field_update';
-  const USER_DELETE = 'delete';
-  const USER_LOGIN = 'login';
-  const USER_LOGOUT = 'logout';
-  const USER_UPDATE = 'update';
+  const USER_DELETE = 'user_delete';
+  const USER_LOGIN = 'user_login';
+  const USER_LOGOUT = 'user_logout';
+  const USER_UPDATE = 'user_update';
 
   /**
    * The number of entity type update events received.
@@ -104,9 +105,11 @@ class IdentityListener implements EventSubscriberInterface {
   }
 
   /**
-   * Destructor: send a refresh request if needed.
+   * {@inheritdoc}
+   *
+   * - Send a refresh request if needed.
    */
-  public function __destruct() {
+  public function destruct() {
     if ($this->etuCount + $this->fsduCount > 0) {
       $this->logger->debug("Entity type updates: @etu, Field storage updates: @fsdu.", [
         '@etu' => $this->etuCount,
