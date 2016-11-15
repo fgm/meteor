@@ -1,0 +1,24 @@
+{
+  "authors": [
+    {
+      "email": "fgm@osinet.fr",
+      "homepage": "http://blog.riff.org",
+      "name": "Frederic G. MARAND",
+      "role": "Maintainer"
+    }
+  ],
+  "description": "A Drupal module to support the fgm:accounts-drupal and fgm:drupal-sso Meteor packages",
+  "homepage": "https://github.com/FGM/meteor",
+  "keywords": ["drupal", "meteor"],
+  "license": "GPL-2.0+",
+  "name": "drupal/meteor",
+  "minimum-stability": "dev",
+  "support": {
+    "docs": "https://github.com/FGM/meteor/blob/master/README.md",
+    "email": "support@osinet.fr",
+    "issues": "https://github.com/FGM/meteor/issues",
+    "rss": "https://github.com/FGM/meteor/commits/master.atom",
+    "source": "https://github.com/FGM/meteor/commits/master"
+  },
+  "type": "drupal-module"
+}
