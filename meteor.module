@@ -16,6 +16,20 @@ use Drupal\user\UserInterface;
 /**
  * Send a notification to a Meteor server.
  *
+ * @param string $path
+ *   The path reached in meteor.
+ * @param array $query
+ *   Optional query params.
+ */
+function _meteor_notify($path, $query = []) {
+  /** @var \Drupal\meteor\Notifier $notifier */
+  $notifier = \Drupal::service('meteor.notifier');
+  $notifier->notify($path, $query);
+}
+
+/**
+ * Send a notification to a Meteor server about a user event.
+ *
  * @param string $event
  *   The name of an event: an EventListener string constant.
  * @param \Drupal\Core\Session\AccountInterface $account
@@ -25,10 +39,21 @@ use Drupal\user\UserInterface;
  *
  * @see \Drupal\meteor\IdentityListener
  */
-function _meteor_notify($event, AccountInterface $account = NULL, $delay = 0) {
-  /** @var \Drupal\meteor\Notifier $notifier */
-  $notifier = \Drupal::service('meteor.notifier');
-  $notifier->notify($event, $account, $delay);
+function _meteor_notify_user_event($event, AccountInterface $account = NULL, $delay = 0) {
+  $query = [
+    'event' => strval($event),
+  ];
+
+  $userId = $account instanceof AccountInterface ? intval($account->id()) : NULL;
+  if (isset($userId)) {
+    $query['userId'] = $userId;
+  }
+
+  if (isset($usDelay)) {
+    $query['delay'] = abs(intval($usDelay));
+  }
+
+  _meteor_notify('drupalUserEvent', $query);
 }
 
 /**
@@ -43,7 +68,7 @@ function meteor_field_storage_config_delete(FieldStorageConfigInterface $entity)
     return;
   }
 
-  _meteor_notify(IdentityListener::FIELD_DELETE);
+  _meteor_notify_user_event(IdentityListener::FIELD_DELETE);
 }
 
 /**
@@ -58,7 +83,7 @@ function meteor_field_storage_config_insert(FieldStorageConfigInterface $entity)
     return;
   }
 
-  _meteor_notify(IdentityListener::FIELD_INSERT);
+  _meteor_notify_user_event(IdentityListener::FIELD_INSERT);
 }
 
 /**
@@ -73,7 +98,7 @@ function meteor_field_storage_config_update(FieldStorageConfigInterface $entity)
     return;
   }
 
-  _meteor_notify(IdentityListener::FIELD_UPDATE);
+  _meteor_notify_user_event(IdentityListener::FIELD_UPDATE);
 }
 
 /**
@@ -82,21 +107,21 @@ function meteor_field_storage_config_update(FieldStorageConfigInterface $entity)
  * Note: this is the hook used on user cancel-as-delete.
  */
 function meteor_user_delete(AccountInterface $account) {
-  _meteor_notify(IdentityListener::USER_DELETE, $account);
+  _meteor_notify_user_event(IdentityListener::USER_DELETE, $account);
 }
 
 /**
  * Implements hook_user_login().
  */
 function meteor_user_login(AccountInterface $account) {
-  _meteor_notify(IdentityListener::USER_LOGIN, $account, 1000);
+  _meteor_notify_user_event(IdentityListener::USER_LOGIN, $account, 1000);
 }
 
 /**
  * Implements hook_user_logout().
  */
 function meteor_user_logout(AccountProxyInterface $account) {
-  _meteor_notify(IdentityListener::USER_LOGOUT, $account->getAccount());
+  _meteor_notify_user_event(IdentityListener::USER_LOGOUT, $account->getAccount());
 }
 
 /**
@@ -109,5 +134,5 @@ function meteor_user_logout(AccountProxyInterface $account) {
  * flushed.
  */
 function meteor_user_update(UserInterface $account) {
-  _meteor_notify(IdentityListener::USER_UPDATE, $account, 1000);
+  _meteor_notify_user_event(IdentityListener::USER_UPDATE, $account, 1000);
 }

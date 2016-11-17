@@ -3,7 +3,6 @@
 namespace Drupal\meteor;
 
 use Drupal\Core\Config\ImmutableConfig;
-use Drupal\Core\Session\AccountInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Promise\PromiseInterface;
@@ -17,9 +16,21 @@ use Psr\Log\LoggerInterface;
  * @copyright (c) 2016 Ouest Systèmes Informatiques (OSInet).
  *
  * @license General Public License version 2 or later
+ *
+ * The Notifier::isUrlValid() method is derived from this gist, as allower by
+ * its MIT license:
+ *
+ * @see https://gist.github.com/dperini/729294
+ *
+ * --------------------------------------------------------
+ * Author: Diego Perini
+ * Updated: 2010/12/05
+ * License: MIT
+ *
+ * Copyright (c) 2010-2013 Diego Perini (http://www.iport.it)
+ * --------------------------------------------------------
  */
 class Notifier {
-  const PATH = 'drupalUserEvent';
 
   /**
    * The http_client service.
@@ -61,29 +72,20 @@ class Notifier {
   /**
    * Send a notification to a Meteor server instance.
    *
-   * @param string $event
-   *   The name of the event to notify the instance about.
-   * @param \Drupal\Core\Session\AccountInterface $account
-   *   Optional. The account triggering the event.
-   * @param int $usDelay
-   *   Optional. The delay after which to act on the notification.
+   * @param string $path
+   *   The path reached in meteor.
+   * @param array $query
+   *   Optional query params.
    */
-  public function notify($event, AccountInterface $account = NULL, $usDelay = 0) {
-    $query = [
-      'event' => strval($event),
-    ];
-
-    $userId = $account instanceof AccountInterface ? intval($account->id()) : NULL;
-    if (isset($userId)) {
-      $query['userId'] = $userId;
-    }
-
-    if (isset($usDelay)) {
-      $query['delay'] = abs(intval($usDelay));
-    }
-
+  public function notify($path, $query = []) {
     $host = $this->config->get('meteor_server');
-    $url = $host . '/' . static::PATH;
+    $url = rtrim($host, '/') . '/' . ltrim($path, '/');
+    if (!$this->isUrlValid($url)) {
+      $this->logger->error("Can't notify meteor on @url (invalid url).", [
+        '@url' => $url,
+      ]);
+      return;
+    }
     $promise = $this->client->getAsync($url, ['query' => $query]);
     $this->logger->info("Notify meteor on @url with query @query.", [
       '@url' => $url,
@@ -93,6 +95,57 @@ class Notifier {
       $this->finalizeWait($promise);
     });
 
+  }
+
+  /**
+   * Meteor url validation.
+   *
+   * Coding standards are disabled on this method because it is copied from
+   * non-Drupal code with differing standards.
+   *
+   * @param string $url
+   *   The url to validate.
+   *
+   * @return bool
+   *   Is the URL valid ?
+   */
+  public function isUrlValid($url) {
+    // @codingStandardsIgnoreStart
+    $valid_url_regex = '_^' .
+      // protocol identifier
+      '(?:https?://)' .
+      // user:pass authentication
+      '(?:\S+(?::\S*)?@)?' .
+      '(?:' .
+        // IP address exclusion
+        // private & local networks
+        '(?!(?:10|127)(?:\.\d{1,3}){3})' .
+        '(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})' .
+        '(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})' .
+        // IP address dotted notation octets
+        // excludes loopback network 0.0.0.0
+        // excludes reserved space >= 224.0.0.0
+        // excludes network & broacast addresses
+        // (first & last IP address of each class)
+        '(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])' .
+        '(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}' .
+        '(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))' .
+      '|' .
+        // host name
+        '(?:(?:[a-z\x{00a1}-\x{ffff}0-9]-*)*[a-z\x{00a1}-\x{ffff}0-9]+)' .
+        // domain name
+        '(?:\.(?:[a-z\x{00a1}-\x{ffff}0-9]-*)*[a-z\x{00a1}-\x{ffff}0-9]+)*' .
+        // TLD identifier
+        '(?:\.(?:[a-z\x{00a1}-\x{ffff}]{2,}))' .
+      ')' .
+      // port number
+      '(?::\d{2,5})?' .
+      // resource path (we prevent query params and anchors)
+      '(?:/[^\s\?#]*)?' .
+      '$_iuS';
+
+    return preg_match($valid_url_regex, $url) ? TRUE : FALSE;
+    // @codingStandardsIgnoreEnd
   }
 
   /**
