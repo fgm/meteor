@@ -19,7 +19,6 @@ use Psr\Log\LoggerInterface;
  * @license General Public License version 2 or later
  */
 class Notifier {
-  const PATH = 'drupalUserEvent';
 
   /**
    * The http_client service.
@@ -61,29 +60,14 @@ class Notifier {
   /**
    * Send a notification to a Meteor server instance.
    *
-   * @param string $event
-   *   The name of the event to notify the instance about.
-   * @param \Drupal\Core\Session\AccountInterface $account
-   *   Optional. The account triggering the event.
-   * @param int $usDelay
-   *   Optional. The delay after which to act on the notification.
+   * @param string $path
+   *   The path reached in meteor.
+   * @param array $query
+   *   Optional query params.
    */
-  public function notify($event, AccountInterface $account = NULL, $usDelay = 0) {
-    $query = [
-      'event' => strval($event),
-    ];
-
-    $userId = $account instanceof AccountInterface ? intval($account->id()) : NULL;
-    if (isset($userId)) {
-      $query['userId'] = $userId;
-    }
-
-    if (isset($usDelay)) {
-      $query['delay'] = abs(intval($usDelay));
-    }
-
+  public function notify($path, $query = []) {
     $host = $this->config->get('meteor_server');
-    $url = $host . '/' . static::PATH;
+    $url = $host . '/' . $path;
     $promise = $this->client->getAsync($url, ['query' => $query]);
     $this->logger->info("Notify meteor on @url with query @query.", [
       '@url' => $url,
