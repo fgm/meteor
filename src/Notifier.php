@@ -67,10 +67,16 @@ class Notifier {
    */
   public function notify($path, $query = []) {
     $host = $this->config->get('meteor_server');
-    $url = $host . '/' . $path;
-    $promise = $this->client->getAsync($url, ['query' => $query]);
+    $url = rtrim($host, '/') . '/' . ltrim($path, '/');
+    $valid_url = filter_var($url, FILTER_VALIDATE_URL, FILTER_FLAG_PATH_REQUIRED);
+    if (!$valid_url) {
+      $this->logger->error("Can't notify meteor on @url (invalid url).", [
+        '@url' => $url,
+      ]);
+    }
+    $promise = $this->client->getAsync($valid_url, ['query' => $query]);
     $this->logger->info("Notify meteor on @url with query @query.", [
-      '@url' => $url,
+      '@url' => $valid_url,
       '@query' => $query ? var_export($query, TRUE) : '(empty)',
     ]);
     drupal_register_shutdown_function(function () use ($promise) {

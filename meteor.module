@@ -14,6 +14,20 @@ use Drupal\meteor\IdentityListener;
 use Drupal\user\UserInterface;
 
 /**
+ * Send a notification to a Meteor server.
+ *
+ * @param string $path
+ *   The path reached in meteor.
+ * @param array $query
+ *   Optional query params.
+ */
+function _meteor_notify($path, $query = []) {
+  /** @var \Drupal\meteor\Notifier $notifier */
+  $notifier = \Drupal::service('meteor.notifier');
+  $notifier->notify($path, $query);
+}
+
+/**
  * Send a notification to a Meteor server about a user event.
  *
  * @param string $event
@@ -40,20 +54,6 @@ function _meteor_notify_user_event($event, AccountInterface $account = NULL, $de
   }
 
   _meteor_notify('drupalUserEvent', $query);
-}
-
-/**
- * Send a notification to a Meteor server.
- *
- * @param string $path
- *   The path reached in meteor.
- * @param array $query
- *   Optional query params.
- */
-function _meteor_notify($path, $query = []) {
-  /** @var \Drupal\meteor\Notifier $notifier */
-  $notifier = \Drupal::service('meteor.notifier');
-  $notifier->notify($path, $query);
 }
 
 /**
