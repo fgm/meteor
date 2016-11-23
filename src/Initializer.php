@@ -39,7 +39,9 @@ class Initializer implements EventSubscriberInterface {
    */
   public static function getSubscribedEvents() {
     $ret = [
-      KernelEvents::REQUEST => ['onRequest'],
+      // Trigger before AuthenticationSubscriber::onKernelRequestAuthenticate.
+      // @sea \Drupal\Core\EventSubscriber\AuthenticationSubscriber
+      KernelEvents::REQUEST => ['onRequest', 301],
       KernelEvents::TERMINATE => ['onTerminate'],
     ];
     return $ret;
