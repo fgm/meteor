@@ -36,10 +36,14 @@ class Initializer implements EventSubscriberInterface {
 
   /**
    * {@inheritdoc}
+   *
+   * @see \Drupal\Core\EventSubscriber\AuthenticationSubscriber::getSubscribedEvents()
    */
   public static function getSubscribedEvents() {
     $ret = [
-      KernelEvents::REQUEST => ['onRequest'],
+      // Trigger before AuthenticationSubscriber::onKernelRequestAuthenticate,
+      // to prevent a redirect loop between Meteor and Drupal.
+      KernelEvents::REQUEST => ['onRequest', 301],
       KernelEvents::TERMINATE => ['onTerminate'],
     ];
     return $ret;
