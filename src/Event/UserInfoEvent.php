@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\meteor;
+namespace Drupal\meteor\Event;
 
 use Symfony\Component\EventDispatcher\Event;
 
@@ -9,7 +9,7 @@ use Symfony\Component\EventDispatcher\Event;
  *
  * @author: Frédéric G. MARAND <fgm@osinet.fr>
  *
- * @copyright (c) 2015 Ouest Systèmes Informatiques (OSInet).
+ * @copyright (c) 2015-2017 Ouest Systèmes Informatiques (OSInet).
  *
  * @license General Public License version 2 or later
  */

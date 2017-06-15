@@ -8,7 +8,8 @@ use Drupal\Core\Link;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Session\SessionManagerInterface;
 use Drupal\Core\Url;
-use Drupal\meteor\UserInfoEvent;
+use Drupal\meteor\Event\MeteorEvents;
+use Drupal\meteor\Event\UserInfoEvent;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -155,8 +156,8 @@ class ServiceController extends ControllerBase {
     ];
 
     $e = new UserInfoEvent($account_data);
-    /** @var \Drupal\meteor\UserInfoEvent $event */
-    $event = $this->eventDispatcher->dispatch('meteor.user_info', $e);
+    /** @var \Drupal\meteor\Event\UserInfoEvent $event */
+    $event = $this->eventDispatcher->dispatch(MeteorEvents::USER_INFO, $e);
     $new_account_data = $event->getUserInfo();
     return new JsonResponse($new_account_data);
   }
