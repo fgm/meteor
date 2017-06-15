@@ -1,4 +1,4 @@
-This module exists to support the Meteor 1.2/1.3 [accounts-drupal] package, as well as the older
+This module exists to support the Meteor 1.2/1.5 [accounts-drupal] package, as well as the older
   [fgm:drupal-sso] Meteor 0.9 to 1.2 package.
 
 [accounts-drupal]: https://github.com/FGM/accounts-drupal
